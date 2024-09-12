@@ -142,8 +142,9 @@ class SuperPoint(Extractor):
         )
 
         url = "https://github.com/cvg/LightGlue/releases/download/v0.1_arxiv/superpoint_v1.pth"  # noqa
-        self.load_state_dict(torch.hub.load_state_dict_from_url(url))
-
+        self.load_state_dict(
+            torch.hub.load_state_dict_from_url(url, model_dir=self.conf.model_dir)
+        )
         if self.conf.max_num_keypoints is not None and self.conf.max_num_keypoints <= 0:
             raise ValueError("max_num_keypoints must be positive or None")
 

@@ -1,4 +1,5 @@
 import collections.abc as collections
+import urllib.request
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Callable, List, Optional, Tuple, Union
@@ -81,6 +82,17 @@ def read_image(path: Path, grayscale: bool = False) -> np.ndarray:
         image = image[..., ::-1]
     return image
 
+def read_image_from_url(url: Path) -> np.ndarray:
+    """Fetch the image from the URL"""
+
+    response = urllib.request.urlopen(url)
+    image_data = response.read()
+
+    image_array = np.asarray(bytearray(image_data), dtype=np.uint8)
+    image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+
+    return image    
+
 
 def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
     """Normalize the image tensor and reorder the dimensions."""
@@ -123,10 +135,21 @@ def resize_image(
 
 def load_image(path: Path, resize: int = None, **kwargs) -> torch.Tensor:
     image = read_image(path)
+    if kwargs.get("crop_vertically") is not None:
+        x0, x1 = kwargs.get("crop_vertically")
+        image = image[:, x0:x1, :]    
     if resize is not None:
         image, _ = resize_image(image, resize, **kwargs)
     return numpy_image_to_torch(image)
 
+def load_image_from_url(url: Path, resize: int = None, **kwargs) -> torch.Tensor:
+    image = read_image_from_url(url)
+    if kwargs.get("crop_vertically") is not None:
+        x0, x1 = kwargs.get("crop_vertically")
+        image = image[:, x0:x1, :]        
+    if resize is not None:
+        image, _ = resize_image(image, resize, **kwargs)
+    return numpy_image_to_torch(image)
 
 class Extractor(torch.nn.Module):
     def __init__(self, **conf):
